@@ -1,0 +1,9 @@
+// add new attribute to all documents that match
+db.school.update(
+    {name: "Holberton school"},
+    {
+        $set: {
+            address: "972 Mission street"
+        }
+    }
+)
