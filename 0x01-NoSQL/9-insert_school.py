@@ -10,9 +10,9 @@ def insert_school(mongo_collection, **kwargs):
             **kwargs: keywords arguments with attribute values
         return: new _id
     """
-    doc = {
-            "name": kwargs.get('name'),
-            "address": kwargs.get('address')
-        }
+    # creating the document directly from kwargs
+    doc = kwargs
+    # inserting the document into the collection
     res = mongo_collection.insert_one(doc)
+    # returning the new _id
     return res.inserted_id
