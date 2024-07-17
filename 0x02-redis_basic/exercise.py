@@ -19,7 +19,7 @@ def count_calls(method: Callable) -> Callable:
     @wraps(method)
     def wrapper(self, *args, **kwargs):
         """increment the call count using method's qualified name"""
-        # Get qualified name of the name
+        # Get qualified name of the method
         qualname = method.__qualname__
 
         # Increment the call count in redis
@@ -27,6 +27,32 @@ def count_calls(method: Callable) -> Callable:
 
         # Execute the original method and return its value
         return method(self, *args, **kwargs)
+
+    return wrapper
+
+
+def call_history(method: Callable) -> Callable:
+    """
+    A decorator to store history of inputs and outputs for a function.
+    Args:
+         method (Callable): The method to be decorated.
+    Returns:
+         Callable: The decorated method with history functionality
+    """
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        qualname = method.__qualname__
+        inputs_key = "{}:inputs".format(qualname)
+        outputs_key = "{}:outputs".format(qualname)
+
+        # store the input arguments in redis
+        self._redis.rpush(inputs_key, str(args))
+        # call the actual method and get the result
+        res = method(self, *args, **kwargs)
+        # store the output result in redis
+        self._redis.rpush(outputs_key, str(res))
+
+        return res
 
     return wrapper
 
@@ -42,6 +68,7 @@ class Cache:
         self._redis = redis.Redis()
         self._redis.flushdb()
 
+    @call_history
     @count_calls
     def store(self, data: Union[str, bytes, int, float]) -> str:
         """
